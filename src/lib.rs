@@ -125,7 +125,7 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
 
     /// Allocate a block of `desired_order` if one is available, returning a pointer
     /// relative to the tree (i.e `0` is the beginning of the tree's memory).
-    pub fn allocate(&mut self, desired_order: u8) -> Option<*const u8> {
+    pub fn allocate(&mut self, desired_order: u8) -> Option<usize> {
         assert!(desired_order <= Self::max_order(), "Block order > maximum order!");
 
         let root = self.block_mut(0);
@@ -136,7 +136,7 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
             return None;
         }
 
-        let mut addr: u32 = 0;
+        let mut addr: usize = 0;
         let mut node_index = 1;
 
         let max_level =  Self::max_order() - desired_order;
@@ -172,13 +172,13 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
 
         self.update_blocks_above(node_index, desired_order);
 
-        Some(addr as *const u8)
+        Some(addr)
     }
 
     /// Deallocate a block of memory from a pointer relative to the tree (e.g `0` is the
     /// beginning of the tree's memory) and the order of the block.
     #[inline]
-    pub fn deallocate(&mut self, ptr: *const u8, order: u8) {
+    pub fn deallocate(&mut self, ptr: usize, order: u8) {
         assert!(order <= Self::max_order(), "Block order > maximum order!");
 
         let level = Self::max_order() - order;
@@ -259,7 +259,7 @@ mod test {
             ].iter().map(|x| x.clone()),
             new_flat_blocks()
         );
-        assert_eq!(tree.allocate(0), Some(0x100000 as *const u8));
+        assert_eq!(tree.allocate(0), Some(0x100000));
     }
 
     #[test]
@@ -329,10 +329,10 @@ mod test {
             iter::once(0..(1 << 30 + 1)),
             new_flat_blocks()
         );
-        assert_eq!(tree.allocate(MAX_ORDER - 1), Some(0x0 as *const u8));
+        assert_eq!(tree.allocate(MAX_ORDER - 1), Some(0x0));
         assert_eq!(
             tree.allocate(MAX_ORDER - 1),
-            Some((2usize.pow(MAX_ORDER_SIZE as u32) / 2) as *const u8)
+            Some((2usize.pow(MAX_ORDER_SIZE as u32) / 2))
         );
         assert_eq!(tree.allocate(0), None);
         assert_eq!(tree.allocate(MAX_ORDER - 1), None);
@@ -341,7 +341,7 @@ mod test {
             iter::once(0..(1 << 30 + 1)),
             new_flat_blocks()
         );
-        assert_eq!(tree.allocate(MAX_ORDER), Some(0x0 as *const u8));
+        assert_eq!(tree.allocate(MAX_ORDER), Some(0x0));
         assert_eq!(tree.allocate(MAX_ORDER), None);
     }
 
@@ -371,7 +371,7 @@ mod test {
         tree.deallocate(ptr, 0);
         tree.deallocate(ptr2, 0);
 
-        assert_eq!(tree.allocate(5).unwrap(), 0x0 as *const u8);
+        assert_eq!(tree.allocate(5).unwrap(), 0x0);
     }
 
     #[test]
