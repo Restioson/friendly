@@ -28,7 +28,7 @@ impl Block {
 }
 
 #[inline]
-const fn blocks_in_tree(levels: u8) -> usize {
+pub const fn blocks_in_tree(levels: u8) -> usize {
     ((1 << levels) - 1) as usize
 }
 
