@@ -119,7 +119,7 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
     }
 
     #[inline]
-    fn block(&self, index: usize) -> &Block {
+    pub fn block(&self, index: usize) -> &Block {
         &self.flat_blocks[index]
     }
 
