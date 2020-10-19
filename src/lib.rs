@@ -1,12 +1,29 @@
 #![cfg_attr(not(test), no_std)]
-#![feature(const_generics, const_evaluatable_checked, const_fn)]
+#![forbid(unsafe_code)]
+#![feature(
+    const_generics,
+    const_evaluatable_checked,
+    const_fn,
+)]
+#![cfg_attr(
+    feature = "const_init",
+    feature(
+        const_mut_refs,
+        const_fn_fn_ptr_basics,
+        const_panic,
+        const_eval_limit,
+    )
+)]
 #![allow(incomplete_features)]
 
-use core::ops::DerefMut;
+#[cfg(feature = "const_init")]
+mod const_init;
+
+use core::borrow::BorrowMut;
 use core::cmp;
 
 /// A block in the bitmap
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct Block {
     /// The order of the biggest block under this block - 1. 0 denotes used
@@ -14,13 +31,13 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new_free(order: u8) -> Self {
+    pub const fn new_free(order: u8) -> Self {
         Block {
             order_free: order + 1,
         }
     }
 
-    pub fn new_used() -> Self {
+    pub const fn new_used() -> Self {
         Block {
             order_free: 0,
         }
@@ -43,12 +60,12 @@ const fn blocks_in_level(level: u8) -> usize {
 /// **1 INDEXED!**
 mod flat_tree {
     #[inline]
-    pub fn left_child(index: usize) -> usize {
+    pub const fn left_child(index: usize) -> usize {
         index << 1
     }
 
     #[inline]
-    pub fn parent(index: usize) -> usize {
+    pub const fn parent(index: usize) -> usize {
         index >> 1
     }
 }
@@ -56,14 +73,14 @@ mod flat_tree {
 // const MAX_ORDER_SIZE: u8 = $BASE_ORDER + MAX_ORDER;
 /// A tree of blocks. Contains the flat representation of the tree as a flat array
 pub struct Tree<B, const LEVELS: u8, const BASE_ORDER: u8>
-    where B: DerefMut<Target = [Block; blocks_in_tree(LEVELS)]>,
+    where B: BorrowMut<[Block; blocks_in_tree(LEVELS)]>,
 {
     /// Flat array representation of tree. Used with the help of the `flat_tree` module.
     flat_blocks: B,
 }
 
 impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
-    where B: DerefMut<Target = [Block; blocks_in_tree(LEVELS)]>,
+    where B: BorrowMut<[Block; blocks_in_tree(LEVELS)]>,
 {
     pub const fn max_order() -> u8 {
         LEVELS - 1
@@ -103,7 +120,7 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
 
         let mut start: usize = 1 << (Self::max_order() - 1);
         for order in 1..=Self::max_order() {
-            for node_index in start..(start +  blocks_in_level(Self::max_order() - order)) {
+            for node_index in start..(start + blocks_in_level(Self::max_order() - order)) {
                 tree.update_block(node_index, order);
             }
 
@@ -115,12 +132,12 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
 
     #[inline]
     fn block_mut(&mut self, index: usize) -> &mut Block {
-        &mut self.flat_blocks[index]
+        &mut self.flat_blocks.borrow_mut()[index]
     }
 
     #[inline]
     pub fn block(&self, index: usize) -> &Block {
-        &self.flat_blocks[index]
+        &self.flat_blocks.borrow()[index]
     }
 
     /// Allocate a block of `desired_order` if one is available, returning a pointer
@@ -332,7 +349,7 @@ mod test {
         assert_eq!(tree.allocate(MAX_ORDER - 1), Some(0x0));
         assert_eq!(
             tree.allocate(MAX_ORDER - 1),
-            Some((2usize.pow(MAX_ORDER_SIZE as u32) / 2))
+            Some(2usize.pow(MAX_ORDER_SIZE as u32) / 2)
         );
         assert_eq!(tree.allocate(0), None);
         assert_eq!(tree.allocate(MAX_ORDER - 1), None);
