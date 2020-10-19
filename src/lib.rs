@@ -50,7 +50,6 @@ pub const fn blocks_in_tree(levels: u8) -> usize {
     ((1 << levels) - 1) as usize
 }
 
-#[inline]
 const fn blocks_in_level(level: u8) -> usize {
     blocks_in_tree(level + 1) - blocks_in_tree(level)
 }
@@ -131,7 +130,6 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
         tree
     }
 
-    #[inline]
     fn block_mut(&mut self, index: usize) -> &mut Block {
         &mut self.flat_blocks.borrow_mut()[index]
     }
@@ -195,7 +193,6 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
 
     /// Deallocate a block of memory from a pointer relative to the tree (e.g `0` is the
     /// beginning of the tree's memory) and the order of the block.
-    #[inline]
     pub fn deallocate(&mut self, ptr: usize, order: u8) {
         assert!(order <= Self::max_order(), "Block order > maximum order!");
 
