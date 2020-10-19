@@ -14,6 +14,7 @@
         const_eval_limit,
     )
 )]
+#![cfg_attr(feature = "const_init", const_eval_limit = "10000000")]
 #![allow(incomplete_features)]
 
 #[cfg(feature = "const_init")]
