@@ -8,6 +8,13 @@ edition = "2018"
 
 [dependencies]
 
+[dev-dependencies]
+criterion = "0.3.3"
+
 [features]
 default = []
 const_init = []
+
+[[bench]]
+name = "throughput"
+harness = false

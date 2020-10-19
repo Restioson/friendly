@@ -130,6 +130,7 @@ impl<B, const LEVELS: u8, const BASE_ORDER: u8> Tree<B, LEVELS, BASE_ORDER>
         tree
     }
 
+    #[inline]
     fn block_mut(&mut self, index: usize) -> &mut Block {
         &mut self.flat_blocks.borrow_mut()[index]
     }
