@@ -18,3 +18,11 @@ const_init = []
 [[bench]]
 name = "throughput"
 harness = false
+
+[[bench]]
+name = "heap"
+harness = false
+
+[[bench]]
+name = "vs_bitmap"
+harness = false
